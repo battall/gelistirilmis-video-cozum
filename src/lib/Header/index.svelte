@@ -5,10 +5,7 @@
 <header>
   <div class="corner">
     <a href="/">
-      <img
-        src="/api/proxy?publisher={$session.publisher}&path=/logo.png"
-        alt={$session.publisher}
-      />
+      <img src="/logo/{$session.publisher}.png" alt={$session.publisher} />
     </a>
   </div>
 
