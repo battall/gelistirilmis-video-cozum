@@ -7,6 +7,13 @@ import (
 	"net/http"
 )
 
+var Publishers = map[string]string{
+  "cap": "capvideo",
+  "hiz-ve-renk" : "hizrenkvideo",
+  "fen-bilimleri" : "fenbilimlerivideocozum",
+  "apotemi" : "apotemivideo",
+}
+
 type Section struct {
 	Id        string  `json:"_id"`
 	Title     string  `json:"title"`
@@ -17,8 +24,10 @@ type Section struct {
 func Handler(w http.ResponseWriter, r *http.Request) {
   log.Println("[REQUEST]")
 
+	publisher := Publishers[r.URL.Query().Get("publisher")]
+
 	// Make Request
-	resp, err := http.Get("http://hizrenkvideo.frns.in/controller/get-source.php?action=source_list&id=" + r.URL.Query().Get("parent_id"))
+	resp, err := http.Get("http://" + publisher + ".frns.in/controller/get-source.php?action=source_list&id=" + r.URL.Query().Get("parent_id"))
 	if err != nil {
 		http.Error(w, err.Error(), resp.StatusCode)
 		return

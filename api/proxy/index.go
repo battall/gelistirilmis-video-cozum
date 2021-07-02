@@ -8,9 +8,9 @@ import (
 
 var Publishers = map[string]string{
   "cap": "capyayinlari",
-  "hiz-ve-renk" : "hizrenkvideo",
-  "fen-bilimleri" : "fenbilimlerivideocozum",
-  "apotemi" : "apotemivideo",
+  "hiz-ve-renk" : "hizrenk",
+  "fen-bilimleri" : "fenbilimleri",
+  "apotemi" : "apotemi",
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
