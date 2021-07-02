@@ -1,0 +1,81 @@
+<script>
+  import { onMount } from "svelte";
+  import { session } from "$app/stores";
+  import Player from "$lib/Player/index.svelte";
+
+  onMount(() => {
+    console.log("INDEX MOUNT", $session);
+    fetch(`/api/sections?publisher=${$session.publisher}&parent_id=2`)
+      .then((res) => res.json())
+      .then((res) => ($session.nav.items = res));
+  });
+</script>
+
+<svelte:head>
+  <title>Video Çözüm</title>
+</svelte:head>
+
+<div class="index">
+  <nav>
+    <ul class="book-sections">
+      {#each $session.nav.items as item}
+        <li class:active={item.active}>{item.title}</li>
+      {/each}
+    </ul>
+  </nav>
+
+  <main>
+    <Player />
+  </main>
+</div>
+
+<style>
+  .index {
+    display: flex;
+  }
+
+  nav {
+    display: flex;
+    flex-direction: column;
+
+    width: 24%;
+    min-height: calc(100vh - 40pt);
+
+    border-right: 1px solid var(--accents-2);
+  }
+
+  nav .book-sections {
+    width: 100%;
+    max-height: calc(100vh - 40pt);
+
+    margin: 0;
+    padding: 0;
+
+    overflow-y: scroll;
+    list-style: none;
+  }
+  nav .book-sections li {
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+
+    padding: 16pt 2vw 16pt 2vw;
+
+    cursor: pointer;
+  }
+  nav .book-sections li.active {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+  nav .book-sections li:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  main {
+    display: flex;
+
+    width: 76%;
+    min-height: calc(100vh - 40pt);
+
+    background-color: #f9f9f9;
+  }
+</style>
