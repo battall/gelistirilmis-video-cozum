@@ -1,19 +1,22 @@
 <script>
+  import { session } from "$app/stores";
 </script>
 
 <header>
   <div class="corner">
     <a href="/">
-      <img src="/api/proxy?publisher=cap&path=/logo.png" alt="logo" />
+      <img
+        src="/api/proxy?publisher={$session.publisher}&path=/logo.png"
+        alt={$session.publisher}
+      />
     </a>
   </div>
 
   <nav>
     <ul class="breadcrumb">
-      <li><a href="/">Main</a> →</li>
-      <li><a href="/products/">Products</a> →</li>
-      <li><a href="/products/dishwashers/">Dishwashers</a> →</li>
-      <li><a>Second hand</a></li>
+      {#each $session.nav.path as path}
+        <li><a>{path}</a></li>
+      {/each}
     </ul>
   </nav>
 
