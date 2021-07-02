@@ -9,7 +9,12 @@
   </div>
 
   <nav>
-    <ul />
+    <ul class="breadcrumb">
+      <li><a href="/">Main</a> →</li>
+      <li><a href="/products/">Products</a> →</li>
+      <li><a href="/products/dishwashers/">Dishwashers</a> →</li>
+      <li><a>Second hand</a></li>
+    </ul>
   </nav>
 
   <div class="corner">
@@ -56,21 +61,40 @@
     --background: rgba(255, 255, 255, 0.7);
   }
 
-  nav a {
-    display: flex;
-    height: 100%;
-    align-items: center;
-    padding: 0 1em;
-    color: var(--heading-color);
-    font-weight: 700;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 10%;
-    text-decoration: none;
-    transition: color 0.2s linear;
+  header nav .breadcrumb {
+    display: inline-flex;
+    list-style: none;
+    font-size: initial;
+    color: #270215;
+    padding: 0;
+    margin: 0;
   }
 
-  a:hover {
-    color: var(--accent-color);
+  header nav .breadcrumb li {
+    padding: 0;
+    margin: 0;
+  }
+
+  header nav .breadcrumb > li + li {
+    margin-left: 5px;
+  }
+
+  header nav .breadcrumb > li a[href] {
+    text-decoration: none;
+    position: relative;
+    font-weight: 400;
+    color: gray;
+    z-index: 0;
+  }
+
+  header nav .breadcrumb > li a[href]:hover,
+  header nav .breadcrumb > li a[href]:focus {
+    color: #c41c87;
+    outline: none;
+  }
+
+  header nav .breadcrumb > li a:not([href]) {
+    font-weight: bold;
+    color: #2c363f;
   }
 </style>
