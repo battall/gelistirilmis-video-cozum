@@ -14,8 +14,8 @@
 
   <nav>
     <ul class="breadcrumb">
-      {#each $session.nav.path as path}
-        <li><a>{path}</a></li>
+      {#each $session.navPath as path}
+        <li><a>{path.title}</a> →</li>
       {/each}
     </ul>
   </nav>

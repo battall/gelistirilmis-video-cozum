@@ -5,10 +5,20 @@
 
   onMount(() => {
     console.log("INDEX MOUNT", $session);
-    fetch(`/api/sections?publisher=${$session.publisher}&parent_id=2`)
-      .then((res) => res.json())
-      .then((res) => ($session.nav.items = res));
+    if ($session.navPath.length === 0)
+      updateNav([{ _id: 2, title: "Kitaplar" }]);
   });
+
+  let updateNav = (navPath) => {
+    $session.navPath = navPath;
+
+    let path = navPath[navPath.length - 1];
+    fetch(
+      `/api/${"sections"}?publisher=${$session.publisher}&parent_id=${path._id}`
+    )
+      .then((res) => res.json())
+      .then((res) => ($session.navItems = res));
+  };
 </script>
 
 <svelte:head>
@@ -18,8 +28,13 @@
 <div class="index">
   <nav>
     <ul class="book-sections">
-      {#each $session.nav.items as item}
-        <li class:active={item.active}>{item.title}</li>
+      {#each $session.navItems as item}
+        <li
+          class:active={item.active}
+          on:click={() => updateNav([...$session.navPath, item])}
+        >
+          {item.title}
+        </li>
       {/each}
     </ul>
   </nav>
