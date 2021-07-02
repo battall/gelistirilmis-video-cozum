@@ -14,8 +14,12 @@
 
   <nav>
     <ul class="breadcrumb">
-      {#each $session.navPath as path}
-        <li><a>{path.title}</a> →</li>
+      {#each $session.navPath as path, i}
+        {#if $session.navPath.length - 1 === i}
+          <li>{path.title}</li>
+        {:else}
+          <li><a>{path.title}</a></li>
+        {/if}
       {/each}
     </ul>
   </nav>
@@ -64,40 +68,65 @@
     --background: rgba(255, 255, 255, 0.7);
   }
 
-  header nav .breadcrumb {
-    display: inline-flex;
-    list-style: none;
-    font-size: initial;
-    color: #270215;
-    padding: 0;
+  .breadcrumb {
     margin: 0;
+    padding: 2em;
+    list-style-type: none;
+    color: #333;
   }
-
-  header nav .breadcrumb li {
-    padding: 0;
-    margin: 0;
-  }
-
-  header nav .breadcrumb > li + li {
-    margin-left: 5px;
-  }
-
-  header nav .breadcrumb > li a[href] {
-    text-decoration: none;
+  .breadcrumb li {
+    display: inline-block;
     position: relative;
-    font-weight: 400;
-    color: gray;
-    z-index: 0;
+    overflow: hidden;
+    margin: 0;
+    padding-right: 2em;
+  }
+  .breadcrumb li:after {
+    content: ">";
+    position: absolute;
+    display: inline-block;
+    right: 0;
+    width: 2em;
+    text-align: center;
+
+    background: white;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.4) 0%,
+      rgba(255, 255, 255, 1) 35%
+    );
+    padding-left: 1em;
+  }
+  .breadcrumb li:last-child {
+    font-weight: bold;
+  }
+  .breadcrumb li:last-child:after {
+    content: "";
   }
 
-  header nav .breadcrumb > li a[href]:hover,
-  header nav .breadcrumb > li a[href]:focus {
+  .breadcrumb a {
+    text-decoration: none;
+    display: inline-block;
+    color: #333;
+    white-space: nowrap;
+    cursor: pointer;
+
+    max-width: 2em;
+    transition: max-width 500ms ease-in-out;
+  }
+  .breadcrumb a:hover {
     color: #c41c87;
+    text-decoration: underline;
     outline: none;
   }
+  .breadcrumb a:hover,
+  .breadcrumb a:focus,
+  .breadcrumb li:hover a {
+    max-width: 1000px;
+  }
 
-  header nav .breadcrumb > li a:not([href]) {
-    font-weight: bold;
-    color: #2c363f;
+  .breadcrumb li:hover:after {
+    padding-left: 0em;
+    background: transparent;
   }
 </style>
