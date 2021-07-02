@@ -6,7 +6,7 @@
   onMount(() => {
     console.log("INDEX MOUNT", $session);
     if ($session.navPath.length === 0)
-      updateNav([{ _id: 2, title: "Kitaplar" }]);
+      updateNav([{ _id: 2, title: "Kitaplar", is_parent: true }]);
   });
 
   let updateNav = (navPath) => {
@@ -14,7 +14,9 @@
 
     let path = navPath[navPath.length - 1];
     fetch(
-      `/api/${"sections"}?publisher=${$session.publisher}&parent_id=${path._id}`
+      `/api/${path.is_parent ? "sections" : "solutions"}?publisher=${
+        $session.publisher
+      }&parent_id=${path._id}`
     )
       .then((res) => res.json())
       .then((res) => ($session.navItems = res));
@@ -31,7 +33,12 @@
       {#each $session.navItems as item}
         <li
           class:active={item.active}
-          on:click={() => updateNav([...$session.navPath, item])}
+          on:click={() =>
+            item.solution_id
+              ? ($session.solution = {
+                  swf: `/api/proxy?publisher=${$session.publisher}&path=${item.swf}`,
+                })
+              : updateNav([...$session.navPath, item])}
         >
           {item.title}
         </li>
@@ -40,7 +47,7 @@
   </nav>
 
   <main>
-    <Player />
+    <Player solution={$session.solution} />
   </main>
 </div>
 
