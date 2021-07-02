@@ -1,0 +1,21 @@
+{
+  "name": "gelistirilmis-video-cozum",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "svelte-kit dev",
+    "build": "svelte-kit build",
+    "preview": "svelte-kit preview"
+  },
+  "dependencies": {
+    "@fontsource/fira-mono": "^4.2.2"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "next",
+    "@sveltejs/kit": "next",
+    "svelte": "^3.34.0"
+  },
+  "repository": "https://github.com/battall/gelistirilmis-video-cozum",
+  "author": "battal <battal51280@gmail.com>",
+  "license": "MIT"
+}
