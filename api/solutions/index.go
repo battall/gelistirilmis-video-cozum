@@ -20,7 +20,7 @@ type Solution struct {
 	Solution_type string  `json:"solution_type"`
 	Audio         string  `json:"audio"`
 	SWF           string  `json:"swf"`
-	XAML          string  `json:"xaml"`
+	XML           string  `json:"xml"`
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +52,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		solutions[i].Solution_type = solution["solved_type"].(string)
 		solutions[i].Audio = solution["audio"].(string)
 		solutions[i].SWF = solution["swf"].(string)
-		solutions[i].XAML = solution["video"].(string)
+		solutions[i].XML = solution["video"].(string)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

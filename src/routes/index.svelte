@@ -36,7 +36,11 @@
           on:click={() =>
             item.solution_id
               ? ($session.solution = {
-                  swf: `/api/proxy?publisher=${$session.publisher}&path=${item.swf}`,
+                  pdf: `/api/proxy?publisher=${
+                    $session.publisher
+                  }&path=${item.swf.replace(".swf", ".pdf")}`,
+                  xml: `/api/proxy?publisher=${$session.publisher}&path=${item.xml}`,
+                  audio: `/api/proxy?publisher=${$session.publisher}&path=${item.audio}`,
                 })
               : updateNav([...$session.navPath, item])}
         >
