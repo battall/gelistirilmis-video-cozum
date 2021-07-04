@@ -5,11 +5,6 @@
 
   let canvas;
 
-  onMount(() => {
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdn.jsdelivr.net/npm/pdfjs-dist@latest/build/pdf.worker.min.js";
-  });
-
   // XML PARSING
   let data = {
     xml: "",
@@ -17,7 +12,43 @@
     objects: [],
   };
 
-  let onSolutionChange = () =>
+  let onSolutionChange = () => {
+    // FETCH PDF AND RENDER
+    fetch(solution.pdf)
+      .then((res) => res.arrayBuffer())
+      .then((res) => pdfjsLib.getDocument(res).promise)
+      .then((pdf) => pdf.getPage(1))
+      .then((page) => {
+        let resolution = 2;
+
+        let desiredSizes = canvas.parentNode.getBoundingClientRect(); // .player rect
+        let currentViewport = page.getViewport({ scale: 1 });
+
+        let scale =
+          (Math.min(
+            desiredSizes.width / currentViewport.width,
+            desiredSizes.height / currentViewport.height
+          ) /
+            100) *
+          95; // 95% scale
+        let viewport = page.getViewport({ scale: scale });
+
+        // Render at a higher resolution but show at a lower resolution
+        canvas.width = resolution * viewport.width;
+        canvas.height = resolution * viewport.height;
+
+        canvas.style.width = viewport.width + "px";
+        canvas.style.height = viewport.height + "px";
+
+        return page.render({
+          canvasContext: canvas.getContext("2d"),
+          viewport,
+          transform: [resolution, 0, 0, resolution, 0, 0], // force it bigger size
+          background: "transparent",
+        }).promise;
+      });
+
+    // FETCH XML AND AUDIO
     fetch(solution.xml)
       .then((res) => res.text())
       .then((res) => {
@@ -77,8 +108,8 @@
             object.type == "swf"
           ) {
             // TODO here
-            alert("NOT IMPLEMENTED YET");
-            object.objectID = element.find("id").text();
+            // alert("NOT IMPLEMENTED YET");
+            // object.objectID = element.find("id").text();
           }
 
           data.objects.push(object);
@@ -88,38 +119,11 @@
           return a.startTime - b.startTime;
         });
       })
-      .then(() => fetch(solution.pdf))
-      .then((res) => res.arrayBuffer())
-      .then((data) => pdfjsLib.getDocument(data).promise)
-      .then((pdf) => pdf.getPage(1))
-      .then((page) => {
-        let resolution = 2;
 
-        let desiredSizes = canvas.parentNode.getBoundingClientRect(); // .player width
-        let currentViewport = page.getViewport({ scale: 1 });
-
-        let scale =
-          (Math.min(
-            desiredSizes.width / currentViewport.width,
-            desiredSizes.height / currentViewport.height
-          ) /
-            100) *
-          95;
-        let viewport = page.getViewport({ scale: scale });
-
-        // Render at a higher resolution but show at a lower resolution
-        canvas.width = resolution * viewport.width;
-        canvas.height = resolution * viewport.height;
-
-        canvas.style.width = viewport.width + "px";
-        canvas.style.height = viewport.height + "px";
-
-        return page.render({
-          canvasContext: canvas.getContext("2d"),
-          viewport,
-          transform: [resolution, 0, 0, resolution, 0, 0], // force it bigger size
-        });
+      .then(() => {
+        // TODO LOAD AUDIO
       });
+  };
 
   $: typeof window === "object" && solution && onSolutionChange();
 </script>

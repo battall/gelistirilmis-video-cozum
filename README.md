@@ -25,7 +25,7 @@ and a few more... i just want to make something better.
 ## Technical
 
 - no more base64 error that sometimes happen (mostly on hizverenk)
-- using [Ruffle](https://ruffle.rs/) instead of a endpoint that converts swf to jpg, if wasm not supported it fallbacks to server generated png
+- using [PDF.JS](https://mozilla.github.io/pdf.js/) instead of a endpoint that converts pdf to jpg
 
 TODO: PUT WEBSITE SPEED TESTS AND COMPARISONS WITH OLD SITE
 
