@@ -88,14 +88,24 @@
           return a.startTime - b.startTime;
         });
       })
-      .then(() => pdfjsLib.getDocument(solution.pdf).promise)
+      .then(() => fetch(solution.pdf))
+      .then((res) => res.arrayBuffer())
+      .then((data) => pdfjsLib.getDocument(data).promise)
       .then((pdf) => pdf.getPage(1))
       .then((page) => {
-        //"/api/proxy?publisher=cap&path=/uploads/assets/questions/37511/3fc2fe867ebab060983a9ea4b6e5ed81-copy.pdf"
-        let scale = 1;
-        let resolution = 4;
+        let resolution = 2;
 
-        let viewport = page.getViewport({ scale });
+        let desiredSizes = canvas.parentNode.getBoundingClientRect(); // .player width
+        let currentViewport = page.getViewport({ scale: 1 });
+
+        let scale =
+          (Math.min(
+            desiredSizes.width / currentViewport.width,
+            desiredSizes.height / currentViewport.height
+          ) /
+            100) *
+          95;
+        let viewport = page.getViewport({ scale: scale });
 
         // Render at a higher resolution but show at a lower resolution
         canvas.width = resolution * viewport.width;
@@ -104,19 +114,24 @@
         canvas.style.width = viewport.width + "px";
         canvas.style.height = viewport.height + "px";
 
-        canvas.getContext("2d").scale(resolution, resolution);
         return page.render({
           canvasContext: canvas.getContext("2d"),
           viewport,
+          transform: [resolution, 0, 0, resolution, 0, 0], // force it bigger size
         });
       });
 
   $: typeof window === "object" && solution && onSolutionChange();
 </script>
 
-<div id="player">
+<div class="player">
   <canvas bind:this={canvas} />
 </div>
 
 <style>
+  .player {
+    width: 100%;
+
+    text-align: center;
+  }
 </style>
