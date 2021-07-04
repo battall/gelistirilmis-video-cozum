@@ -2,21 +2,23 @@
   import { onMount } from "svelte";
 
   export let solution = undefined;
-
+  let worker;
   let canvas;
-
-  // XML PARSING
   let data = {
     xml: "",
     info: {},
     objects: [],
   };
 
+  onMount(() => {
+    worker = new pdfjsLib.PDFWorker("worker");
+  });
+
   let onSolutionChange = () => {
     // FETCH PDF AND RENDER
     fetch(solution.pdf)
       .then((res) => res.arrayBuffer())
-      .then((res) => pdfjsLib.getDocument(res).promise)
+      .then((data) => pdfjsLib.getDocument({ data, worker }).promise)
       .then((pdf) => pdf.getPage(1))
       .then((page) => {
         let resolution = 2;
