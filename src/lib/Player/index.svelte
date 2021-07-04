@@ -2,19 +2,41 @@
   import { onMount } from "svelte";
 
   export let solution = undefined;
-  let worker;
   let canvas;
+  let canvasContext;
+  let worker;
+
+  let audio;
+  let audioDurationText = "";
   let data = {
-    xml: "",
+    xml: undefined,
     info: {},
     objects: [],
   };
 
   onMount(() => {
+    canvasContext = canvas.getContext("2d");
     worker = new pdfjsLib.PDFWorker("worker");
   });
 
-  let onSolutionChange = () => {
+  const calculateTime = (secs) => {
+    const minutes = Math.floor(secs / 60);
+    const seconds = Math.floor(secs % 60);
+    const returnedSeconds = seconds < 10 ? `0${seconds}` : `${seconds}`;
+    return `${minutes}:${returnedSeconds}`;
+  };
+
+  const onSolutionChange = () => {
+    // CLEAR CURRENT SOLUTION PROPERTIES
+    canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+    audio = undefined;
+    audioDurationText = "";
+    data = {
+      xml: undefined,
+      info: {},
+      objects: [],
+    };
+
     // FETCH PDF AND RENDER
     fetch(solution.pdf)
       .then((res) => res.arrayBuffer())
@@ -43,7 +65,7 @@
         canvas.style.height = viewport.height + "px";
 
         return page.render({
-          canvasContext: canvas.getContext("2d"),
+          canvasContext,
           viewport,
           transform: [resolution, 0, 0, resolution, 0, 0], // force it bigger size
           background: "transparent",
@@ -123,21 +145,102 @@
       })
 
       .then(() => {
-        // TODO LOAD AUDIO
+        audio = new Audio(solution.audio);
+        audio.play();
+
+        audio.addEventListener("playing", function (event) {
+          return;
+          if (_seekStatus) {
+            _sound.pause();
+            return;
+          }
+          _tween = new TweenLite(_sound, _sound.duration, {
+            onUpdate: sound_playProgress,
+          });
+          playTween();
+        });
+
+        audio.addEventListener("pause", function (event) {
+          return;
+          if (_seekStatus) return;
+          _tween.pause();
+          _tween.onUpdate = null;
+          _sound.pause();
+          pauseTween();
+        });
+
+        audio.addEventListener("seeked", function (event) {
+          return;
+        });
       });
+  };
+
+  const onToggle = () => {
+    if (!audio) return;
+
+    audio.paused ? audio.play() : audio.pause();
+    audio = audio;
   };
 
   $: typeof window === "object" && solution && onSolutionChange();
 </script>
 
 <div class="player">
-  <canvas bind:this={canvas} />
+  <div class="video">
+    <canvas bind:this={canvas} />
+  </div>
+  <div class="audio">
+    <button class="toggle" on:click={onToggle}>
+      {!audio || audio.paused ? "\u25BA" : "\u2759\u00A0\u2759"}
+    </button>
+    <div class="progress">
+      <span class="duration">{audioDurationText}&nbsp;&nbsp;</span>
+    </div>
+    <button class="speed" />
+  </div>
 </div>
 
 <style>
   .player {
     width: 100%;
+  }
 
-    text-align: center;
+  .player .video {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    height: calc(100% - 40pt);
+  }
+
+  .player .audio {
+    display: flex;
+    justify-content: space-between;
+
+    width: 100%;
+    height: 40pt;
+
+    box-sizing: border-box;
+    border-top: 1px solid var(--accents-3);
+    background-color: white;
+  }
+  .player .audio button {
+    width: 40pt;
+
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 150%;
+    background-color: white;
+  }
+  .player .audio .toggle {
+  }
+  .player .audio .progress {
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    flex: 1 1 auto;
+  }
+  .player .audio .speed {
   }
 </style>
