@@ -15,6 +15,7 @@
   let audio;
   let audioPaused = true;
   let audioCurrentTimeText = "";
+  let audioPlaybackRate = 1;
 
   let track;
   let trackWidth = "0";
@@ -58,6 +59,39 @@
 
     audio.addEventListener("seeked", function (event) {
       return;
+      _seekStatus = true;
+      stopAll();
+      clearAllShapes();
+
+      var _time = _sound.currentTime;
+
+      aa.each(_mainArray, function (_key, _object) {
+        if (
+          _object.startTime <= _time &&
+          _time <= _object.startTime + _object.duration
+        ) {
+          _time = _object.startTime - 0.001;
+          return false;
+        }
+      });
+
+      aa.each(_mainArray, function (_key, _object) {
+        if (_object.startTime < _time) {
+          _object.status = true;
+
+          if (_object.type == "add") {
+            var _tempObject = getObjectForAdd(_object.objectID);
+            _tempObject.status = true;
+            canvas_addNewProcess(_object, true, _tempObject, false);
+          } else {
+            canvas_addNewProcess(_object, true, false);
+          }
+        } else {
+          _object.status = false;
+        }
+      });
+
+      _seekStatus = false;
     });
   });
 
@@ -73,6 +107,12 @@
     audio.paused ? audio.play() : audio.pause();
   };
 
+  const onChangeSpeed = () => {
+    if (audioPlaybackRate === 2) audioPlaybackRate = 0.5;
+    else audioPlaybackRate += 0.5;
+    audio.playbackRate = audioPlaybackRate;
+  };
+
   $: typeof window === "object" && src && onSrcChange();
 </script>
 
@@ -84,7 +124,7 @@
     <div class="track" style={`width: ${trackWidth}%`} />
     <span class="current-time">{audioCurrentTimeText}</span>
   </div>
-  <button class="speed">1×</button>
+  <button class="speed" on:click={onChangeSpeed}>{audioPlaybackRate}×</button>
 </div>
 
 <style>
@@ -123,7 +163,7 @@
   }
   .audio .progress .current-time {
     position: absolute;
-    right: 48pt;
+    right: 40pt;
 
     width: 32pt;
   }
