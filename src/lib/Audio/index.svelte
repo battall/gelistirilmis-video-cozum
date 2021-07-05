@@ -98,6 +98,7 @@
   const onSrcChange = () => {
     audioPaused = true;
     audio.src = src;
+    audio.playbackRate = audioPlaybackRate; // playbackRate resets when src changed
     audio.play();
   };
 
