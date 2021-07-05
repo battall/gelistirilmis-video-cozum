@@ -178,9 +178,11 @@
 
   @media only screen and (min-width: 480px) {
     nav {
+      display: flex;
       width: 24%;
     }
     main {
+      display: flex;
       width: 76%;
     }
   }
