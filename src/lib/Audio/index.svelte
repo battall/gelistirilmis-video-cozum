@@ -25,7 +25,7 @@
     // This emits when src changed
     audio.addEventListener("timeupdate", () => {
       audioCurrentTimeText = calculateTime(audio.currentTime);
-      trackWidth = (audio.currentTime / audio.duration) * 100;
+      trackWidth = (audio.currentTime / audio.duration) * 100 || 0;
     });
 
     // audio.play();
@@ -82,7 +82,7 @@
   </button>
   <div class="progress">
     <div class="track" style={`width: ${trackWidth}%`} />
-    <span class="current-time">{audioCurrentTimeText}&nbsp;&nbsp;</span>
+    <span class="current-time">{audioCurrentTimeText}</span>
   </div>
   <button class="speed">1×</button>
 </div>
@@ -123,7 +123,7 @@
   }
   .audio .progress .current-time {
     position: absolute;
-    right: 40pt;
+    right: 48pt;
 
     width: 32pt;
   }
