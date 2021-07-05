@@ -33,7 +33,7 @@
       .then((data) => pdfjsLib.getDocument({ data, worker }).promise)
       .then((pdf) => pdf.getPage(1))
       .then((page) => {
-        let resolution = window.devicePixelRatio; // 2;
+        let resolution = window.devicePixelRatio * 2;
 
         let desiredSizes = canvas.parentNode.getBoundingClientRect(); // .player rect
         let currentViewport = page.getViewport({ scale: 1 });
@@ -151,6 +151,7 @@
 <style>
   .player {
     width: 100%;
+    height: 100%;
   }
 
   .player .video {
@@ -158,6 +159,6 @@
     justify-content: center;
     align-items: center;
 
-    height: calc(100% - 40pt);
+    height: calc(100% - var(--header-height));
   }
 </style>
