@@ -20,47 +20,13 @@
 
   const onSolutionChange = () => {
     // CLEAR CURRENT SOLUTION PROPERTIES
+    canvas.style.background = "";
     canvasContext.clearRect(0, 0, canvas.width, canvas.height);
     data = {
       xml: undefined,
       info: {},
       objects: [],
     };
-
-    // FETCH PDF AND RENDER
-    fetch(solution.pdf)
-      .then((res) => res.arrayBuffer())
-      .then((data) => pdfjsLib.getDocument({ data, worker }).promise)
-      .then((pdf) => pdf.getPage(1))
-      .then((page) => {
-        let resolution = window.devicePixelRatio * 2;
-
-        let desiredSizes = canvas.parentNode.getBoundingClientRect(); // .player rect
-        let currentViewport = page.getViewport({ scale: 1 });
-
-        let scale =
-          (Math.min(
-            desiredSizes.width / currentViewport.width,
-            desiredSizes.height / currentViewport.height
-          ) /
-            100) *
-          95; // 95% scale
-        let viewport = page.getViewport({ scale: scale });
-
-        // Render at a higher resolution but show at a lower resolution
-        canvas.width = resolution * viewport.width;
-        canvas.height = resolution * viewport.height;
-
-        canvas.style.width = viewport.width + "px";
-        canvas.style.height = viewport.height + "px";
-
-        return page.render({
-          canvasContext,
-          viewport,
-          transform: [resolution, 0, 0, resolution, 0, 0], // force it bigger size
-          background: "transparent",
-        }).promise;
-      });
 
     // FETCH XML AND AUDIO
     fetch(solution.xml)
@@ -80,8 +46,13 @@
         data.xml = data.xml.childNodes[0];
 
         // XML Parse Info
+        // [w, h, s, pX, pY, unknown]
         data.info._raw = data.xml.childNodes[0].childNodes[0].data.split("|");
+        data.info.solutionWidth = data.info._raw[0];
+        data.info.solutionHeight = data.info._raw[1];
         data.info.scale = data.info._raw[2];
+        data.info.paddingLeft = data.info._raw[3];
+        data.info.paddingTop = data.info._raw[4];
 
         // XML Parse Objects
         data.objects = [];
@@ -132,9 +103,75 @@
         data.objects.sort(function (a, b) {
           return a.startTime - b.startTime;
         });
+
+        console.log("data.objects", data.objects);
       })
       .then(() => {
-        // audio.play();
+        // FETCH PDF AND RENDER
+        fetch(solution.pdf)
+          .then((res) => res.arrayBuffer())
+          .then((data) => pdfjsLib.getDocument({ data, worker }).promise)
+          .then((pdf) => pdf.getPage(1))
+          .then((page) => {
+            data.info.questionWidth = page.view[2];
+            data.info.questionHeight = page.view[3];
+
+            let resolution = window.devicePixelRatio; // * 2;
+
+            let playerRect = canvas.parentNode.getBoundingClientRect(); // .player rect
+            let currentViewport = page.getViewport({ scale: 1 });
+
+            let scale =
+              (Math.min(
+                playerRect.width / currentViewport.width,
+                playerRect.height / currentViewport.height
+              ) /
+                100) *
+              95; // 95% scale
+            let viewport = page.getViewport({ scale: scale });
+
+            // Render at a higher resolution but show at a lower resolution
+            canvas.width = resolution * viewport.width;
+            canvas.height = resolution * viewport.height;
+
+            canvas.style.width = viewport.width + "px";
+            canvas.style.height = viewport.height + "px";
+
+            return page.render({
+              canvasContext,
+              viewport,
+              transform: [resolution, 0, 0, resolution, 0, 0], // force it bigger size
+              background: "transparent",
+            }).promise;
+          })
+          .then(() => {
+            let solutionPNG = canvas.toDataURL("image/png");
+            // TODO: CLEAN
+            // IDK After here, i just translated from fernus's source
+
+            let playerRect = canvas.parentNode.getBoundingClientRect(); // .player rect
+            let playerScale = Math.min(
+              playerRect.width / data.info.solutionWidth,
+              playerRect.height / data.info.solutionHeight
+            );
+
+            var _infoPaddingX = data.info.paddingLeft * playerScale;
+            var _infoPaddingY = data.info.paddingTop * playerScale;
+            var _infoSolutionW = data.info.solutionWidth * playerScale;
+            var _infoSolutionH = data.info.solutionHeight * playerScale;
+            var _x = data.info.questionWidth * data.info.scale * playerScale;
+            var _y = data.info.questionHeight * data.info.scale * playerScale;
+
+            canvas.width = _infoSolutionW;
+            canvas.height = _infoSolutionH;
+
+            canvas.style.backgroundImage = "url('" + solutionPNG + "')";
+            canvas.style.backgroundPosition = `${_infoPaddingX}px ${_infoPaddingY}px`;
+            canvas.style.backgroundSize = `${_x}px ${_y}px`;
+            canvas.style.backgroundRepeat = "no-repeat";
+
+            // canvasContext.scale(playerScale, playerScale);
+          });
       });
   };
 
