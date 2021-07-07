@@ -9,8 +9,8 @@
 
   onMount(() => {
     if ($session.navPath.length === 0)
-      updateNav([{ _id: 2, title: "Kitaplar", is_parent: true }]);
-    // updateNav(test);
+      // updateNav([{ _id: 2, title: "Kitaplar", is_parent: true }]);
+      updateNav(test);
   });
 
   let updateNav = (navPath) => {

@@ -1,17 +1,15 @@
 <script>
   import { onMount } from "svelte";
   import Audio from "$lib/Audio/index.svelte";
+  import utils from "./utils.js";
 
   export let solution = undefined;
   let canvas;
   let canvasContext;
-  let audio;
+  let canvasTween;
   let worker;
-  let data = {
-    xml: undefined,
-    info: {},
-    objects: [],
-  };
+  let tween;
+  let data = { xml: undefined, info: {}, objects: [] };
 
   onMount(() => {
     canvasContext = canvas.getContext("2d");
@@ -22,11 +20,7 @@
     // CLEAR CURRENT SOLUTION PROPERTIES
     canvas.style.background = "";
     canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-    data = {
-      xml: undefined,
-      info: {},
-      objects: [],
-    };
+    data = { xml: undefined, info: {}, objects: [] };
 
     // FETCH XML AND AUDIO
     fetch(solution.xml)
@@ -41,68 +35,7 @@
         return xml;
       })
       .then((xml) => {
-        // XML Parse
-        data.xml = new DOMParser().parseFromString(xml, "text/xml");
-        data.xml = data.xml.childNodes[0];
-
-        // XML Parse Info
-        // [w, h, s, pX, pY, unknown]
-        data.info._raw = data.xml.childNodes[0].childNodes[0].data.split("|");
-        data.info.solutionWidth = data.info._raw[0];
-        data.info.solutionHeight = data.info._raw[1];
-        data.info.scale = data.info._raw[2];
-        data.info.paddingLeft = data.info._raw[3];
-        data.info.paddingTop = data.info._raw[4];
-
-        // XML Parse Objects
-        data.objects = [];
-        for (let i = 1; i < data.xml.childNodes.length; i++) {
-          let element = data.xml.childNodes[i];
-          var object = {
-            id: element.getAttribute("name"),
-            type: element.getAttribute("act"),
-            startTime: parseFloat(element.getAttribute("t1") / 1000),
-            duration: parseFloat(element.getAttribute("t2") / 1000),
-            color: "#" + element.getAttribute("color").slice(2),
-            highlight: element.getAttribute("hl"),
-            size: parseFloat(element.getAttribute("thc")),
-            status: false,
-          };
-
-          if (
-            object.type == "line" ||
-            object.type == "eraser" ||
-            object.type == "arrow" ||
-            object.type == "triangle" ||
-            object.type == "rectangle"
-          ) {
-            object.points = [];
-            for (let i = 0; i < element.childNodes.length; i++) {
-              let point = element.childNodes[i].childNodes[0].data.split("|");
-              object.points.push(point);
-            }
-          } else if (object.type == "circle") {
-            // [x, y, w, h]
-            object.rectangle =
-              element.childNodes[0].childNodes[0].data.split("|");
-            object.rectangle = object.rectangle.map((e) => parseFloat(e));
-          } else if (
-            object.type == "delete" ||
-            object.type == "add" ||
-            object.type == "scale" ||
-            object.type == "swf"
-          ) {
-            // TODO here
-            // alert("NOT IMPLEMENTED YET");
-            // object.objectID = element.find("id").text();
-          }
-
-          data.objects.push(object);
-        }
-
-        data.objects.sort(function (a, b) {
-          return a.startTime - b.startTime;
-        });
+        data = utils.parse_fernus_xml(xml);
 
         console.log("data.objects", data.objects);
       })
@@ -121,16 +54,14 @@
             let playerRect = canvas.parentNode.getBoundingClientRect(); // .player rect
             let currentViewport = page.getViewport({ scale: 1 });
 
-            let scale =
-              (Math.min(
-                playerRect.width / currentViewport.width,
-                playerRect.height / currentViewport.height
-              ) /
-                100) *
-              95; // 95% scale
+            // Fit canvas as much as possible
+            let scale = Math.min(
+              playerRect.width / currentViewport.width,
+              playerRect.height / currentViewport.height
+            );
             let viewport = page.getViewport({ scale: scale });
 
-            // Render at a higher resolution but show at a lower resolution
+            // Render at a higher resolution but show at a lower resolution -> sharper
             canvas.width = resolution * viewport.width;
             canvas.height = resolution * viewport.height;
 
@@ -170,9 +101,131 @@
             canvas.style.backgroundSize = `${_x}px ${_y}px`;
             canvas.style.backgroundRepeat = "no-repeat";
 
-            // canvasContext.scale(playerScale, playerScale);
+            canvasContext.scale(playerScale, playerScale);
           });
       });
+  };
+
+  function canvasObjectAdd(object, _status, _addObject) {
+    if (canvasTween) {
+      canvasTween.clear();
+      canvasTween.kill();
+      canvasTween = null;
+    }
+    switch (object.type) {
+      case "line":
+        let position = { x: object.points[0].x, y: object.points[0].y };
+
+        canvasContext.beginPath();
+        canvasContext.name = object.id;
+        canvasContext.lineWidth = object.size;
+        canvasContext.strokeStyle = object.color;
+        canvasContext.globalAlpha = object.highlight == "false" ? 1 : 0.5;
+        canvasContext.globalCompositeOperation = "source-over";
+        canvasContext.lineJoin = "round";
+        canvasContext.lineCap = "round";
+        // canvasContext.fillStyle = "none";
+        canvasContext.moveTo(position.x, position.y);
+
+        if (!_status) {
+          canvasTween = new TimelineLite();
+          canvasTween.add(
+            TweenLite.to(position, object.duration, {
+              bezier: {
+                curviness: 0,
+                values: object.points,
+                autoRotate: false,
+              },
+              ease: Linear.easeNone,
+              onUpdate: () => {
+                canvasContext.lineTo(position.x, position.y);
+                canvasContext.stroke();
+              },
+              onComplete: () => {
+                canvasContext.closePath();
+                canvasContext.stroke();
+                // removeAfter(_objectArray);
+              },
+            })
+          );
+          // _objectArray.push(object);
+        } else {
+          fastShape(object, false);
+        }
+        //console.log('line');
+        break;
+      case "eraser":
+        addEraser(object, _status);
+        //console.log('eraser');
+        break;
+      case "arrow":
+        addArrow(object, _status);
+        //console.log(_object);
+        break;
+      case "triangle":
+        addTriangle(object, _status);
+        //console.log('triangle');
+        break;
+      case "rectangle":
+        addRectangle(object, _status);
+        //console.log('rectangle');
+        break;
+      case "circle":
+        addCircle(object, _status);
+        //console.log('circle');
+        break;
+      case "delete":
+        removeShape(object);
+        //console.log('delete');
+        break;
+      case "add":
+        fastShape(_addObject, _status);
+        //console.log(_addObject,1);
+        break;
+      case "scale":
+        changeScale(object);
+        break;
+      case "swf":
+        changeSWF(object);
+        break;
+    }
+  }
+
+  let onTimeUpdate = (event) => {};
+  let onPlaying = (event) => {
+    let audio = event.detail.target;
+    tween = new TweenLite(audio, audio.duration, {
+      onUpdate: () => {
+        for (let i = 0; i < data.objects.length; i++) {
+          let object = data.objects[i];
+          if (!object.status && object.startTime <= audio.currentTime) {
+            object.status = true;
+            if (object.type == "add") {
+              alert("UNTESTED");
+              continue;
+              let addObject = data.objects.find((e) => {
+                e.id === object.objectID;
+              });
+              console.log(addObject);
+              // _object.status = true;
+              // canvas_addNewProcess(object, true, _object);
+            } else {
+              console.log("ADD", object.duration);
+              canvasObjectAdd(object);
+            }
+          }
+        }
+      },
+    });
+
+    if (canvasTween) canvasTween.play();
+  };
+
+  let onPause = () => {
+    tween.pause();
+    tween.onUpdate = undefined;
+
+    if (canvasTween) canvasTween.pause();
   };
 
   $: typeof window === "object" && solution && onSolutionChange();
@@ -182,7 +235,12 @@
   <div class="video">
     <canvas bind:this={canvas} />
   </div>
-  <Audio src={solution && solution.audio} bind:this={audio} />
+  <Audio
+    src={solution && solution.audio}
+    on:timeupdate={onTimeUpdate}
+    on:playing={onPlaying}
+    on:pause={onPause}
+  />
 </div>
 
 <style>
