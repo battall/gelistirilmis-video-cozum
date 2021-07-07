@@ -8,23 +8,26 @@
 </script>
 
 <script>
-  import { onMount } from "svelte";
+  import { onMount, createEventDispatcher } from "svelte";
 
   export let src = "";
+
+  const dispatch = createEventDispatcher();
 
   let audio;
   let audioPaused = true;
   let audioCurrentTimeText = "";
   let audioPlaybackRate = 1;
 
-  let track;
   let trackWidth = "0";
 
   onMount(() => {
     audio = new Audio();
 
-    // This emits when src changed
-    audio.addEventListener("timeupdate", () => {
+    // This emits when src changed too
+    audio.addEventListener("timeupdate", (event) => {
+      dispatch("timeupdate", event);
+
       audioCurrentTimeText = calculateTime(audio.currentTime);
       trackWidth = (audio.currentTime / audio.duration) * 100 || 0;
     });
@@ -33,28 +36,15 @@
     // audio = audio;
 
     audio.addEventListener("playing", function (event) {
-      audioPaused = false;
+      dispatch("playing", event);
 
-      return;
-      if (_seekStatus) {
-        _sound.pause();
-        return;
-      }
-      _tween = new TweenLite(_sound, _sound.duration, {
-        onUpdate: sound_playProgress,
-      });
-      playTween();
+      audioPaused = false;
     });
 
     audio.addEventListener("pause", function (event) {
-      audioPaused = true;
+      dispatch("pause", event);
 
-      return;
-      if (_seekStatus) return;
-      _tween.pause();
-      _tween.onUpdate = null;
-      _sound.pause();
-      pauseTween();
+      audioPaused = true;
     });
 
     audio.addEventListener("seeked", function (event) {
